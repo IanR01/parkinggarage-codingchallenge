@@ -12,11 +12,7 @@ const getParkingSessions = async (req, res) => {
 const getParkingSession = async (req, res) => {
     const { id } = req.params
 
-    const parkingSession = await ParkingSession.findOne({
-        where: {
-            id
-        }
-    })
+    const parkingSession = await ParkingSession.findOne({ where: { id } })
 
     res.status(200).json(parkingSession)
 }
@@ -25,22 +21,42 @@ const getParkingSession = async (req, res) => {
 const createParkingSession = async (req, res) => {
     const { parkingspots_group_id } = req.body
 
-    const newParkingSession = await ParkingSession.create({
-        parkingspots_group_id
-    })
+    const newParkingSession = await ParkingSession.create({ parkingspots_group_id })
 
     res.status(200).json(newParkingSession)
 }
 
-// update a specific parking session
+// process payment on a specific parking session
+
+const processPaymentOnParkingSession = async (req, res) => {
+    const { id } = req.params
+    const { payment } = req.body
+
+    // get the parking session to check if any payment is already made
+    const parkingSession = await ParkingSession.findOne({ where: { id } })
+
+    // add up all payments
+    const updatedPaidAmount = parkingSession.paid_amount + payment
+    
+    console.log("paid amount", parkingSession.paid_amount)
+    console.log("payment", payment)
+    console.log("updatedPaidAmount", updatedPaidAmount)
+
+    // update the parking session with all payments
+    const updatedParkingSession = await ParkingSession.update({ paid_amount: updatedPaidAmount }, {
+        where: { id }
+    })
+
+    res.status(200).json(updatedParkingSession)
+}
+
+// end a specific parking session
 const endParkingSession = async (req, res) => {
     const { id } = req.params
     const { session_ended } = req.body
 
     const updatedParkingSession = await ParkingSession.update({ session_ended }, {
-        where: {
-            id
-        }
+        where: { id }
     })
 
     res.status(200).json(updatedParkingSession)
@@ -50,5 +66,6 @@ module.exports = {
     getParkingSessions,
     getParkingSession,
     createParkingSession,
+    processPaymentOnParkingSession,
     endParkingSession
 }

@@ -4,6 +4,7 @@ const {
     getParkingSessions,
     getParkingSession,
     createParkingSession,
+    processPaymentOnParkingSession,
     endParkingSession
 } = require('../controllers/parkingSessionController')
 
@@ -17,6 +18,9 @@ router.get('/:id', getParkingSession)
 
 // create a new parking session
 router.post('/', createParkingSession)
+
+// process payment on a specific parking session
+router.post('/payment/:id', processPaymentOnParkingSession)
 
 // end a specific parking session
 router.post('/:id', endParkingSession)

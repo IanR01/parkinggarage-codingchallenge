@@ -30,9 +30,9 @@ const ParkingSession = sequelize.define('ParkingSession', {
         allowNull: false
     },
     paid_amount: {
-        type: DataTypes.DECIMAL(8,2),
+        type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: "0.00"
+        defaultValue: "0"
     },
     session_ended: {
         type: DataTypes.DATE,
