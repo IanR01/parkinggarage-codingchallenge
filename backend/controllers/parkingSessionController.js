@@ -1,43 +1,54 @@
+const ParkingSession = require('../models/parkingSessionModel')
+
 
 // get all parking-sessions
-const getParkingSessions = (req, res) => {
-    const parkingSessions = {
-        "temporary test response": "getParkingSessions"
-    }
+const getParkingSessions = async (req, res) => {
+    const parkingSessions = await ParkingSession.findAll();
 
     res.status(200).json(parkingSessions)
 }
 
 // get a specific parking session by id
-const getParkingSession = (req, res) => {
-    const parkingSession = {
-        "temporary test response": "getParkingSession"
-    }
+const getParkingSession = async (req, res) => {
+    const { id } = req.params
+
+    const parkingSession = await ParkingSession.findOne({
+        where: {
+            id
+        }
+    })
 
     res.status(200).json(parkingSession)
 }
 
 // create a new parking session
-const createParkingSession = (req, res) => {
-    const parkingSession = {
-        "temporary test response": "createParkingSession"
-    }
+const createParkingSession = async (req, res) => {
+    const { parkingspots_group_id } = req.body
 
-    res.status(200).json(parkingSession)
+    const newParkingSession = await ParkingSession.create({
+        parkingspots_group_id
+    })
+
+    res.status(200).json(newParkingSession)
 }
 
 // update a specific parking session
-const updateParkingSession = (req, res) => {
-    const parkingSession = {
-        "temporary test response": "updateParkingSession"
-    }
+const endParkingSession = async (req, res) => {
+    const { id } = req.params
+    const { session_ended } = req.body
 
-    res.status(200).json(parkingSession)
+    const updatedParkingSession = await ParkingSession.update({ session_ended }, {
+        where: {
+            id
+        }
+    })
+
+    res.status(200).json(updatedParkingSession)
 }
 
 module.exports = {
     getParkingSessions,
     getParkingSession,
     createParkingSession,
-    updateParkingSession
+    endParkingSession
 }

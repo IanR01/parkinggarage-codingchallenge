@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const { Sequelize, DataTypes } = require('sequelize');
 
 const sequelize = new Sequelize(
@@ -9,6 +11,12 @@ const sequelize = new Sequelize(
         dialect: 'mysql'
     }
 )
+
+sequelize.authenticate().then(() => {
+    console.log('Successfully connected to database.')
+}).catch((error) => {
+    console.error('Unable to connect to the database:', error)
+})
 
 const ParkingSession = sequelize.define('ParkingSession', {
     id: {
@@ -40,3 +48,5 @@ sequelize.sync().then(() => {
 }).catch((error) => {
     console.error('Unable to create table: ', error)
 })
+
+module.exports = ParkingSession

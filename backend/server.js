@@ -31,18 +31,13 @@ const sequelize = new Sequelize(
   }
 )
 
-const startServer = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Successfully connected to database.')
-  
-    // listen for requests
-    app.listen(process.env.PORT, () => {
-      console.log(`Example app listening on port ${process.env.PORT}`)
-    })
-  } catch (error) {
-    console.error('Unable to connect to the database:', error)
-  }
-}
+sequelize.authenticate().then(() => {
+  console.log('Successfully connected to database.')
 
-startServer()
+  // listen for requests
+  app.listen(process.env.PORT, () => {
+    console.log(`Example app listening on port ${process.env.PORT}`)
+  })
+}).catch((error) => {
+  console.error('Unable to connect to the database:', error)
+})

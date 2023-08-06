@@ -4,7 +4,7 @@ const {
     getParkingSessions,
     getParkingSession,
     createParkingSession,
-    updateParkingSession
+    endParkingSession
 } = require('../controllers/parkingSessionController')
 
 const router = express.Router()
@@ -18,7 +18,7 @@ router.get('/:id', getParkingSession)
 // create a new parking session
 router.post('/', createParkingSession)
 
-// update a specific parking session
-router.post('/:id', updateParkingSession)
+// end a specific parking session
+router.post('/:id', endParkingSession)
 
 module.exports = router
