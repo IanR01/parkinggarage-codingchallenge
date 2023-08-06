@@ -21,10 +21,15 @@ app.use((req, res, next) => {
 app.use('/api/parking-sessions', parkingSessionRoutes)
 
 // connect to database
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  dialect: 'mysql'
-})
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USERNAME,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: 'mysql'
+  }
+)
 
 const startServer = async () => {
   try {
