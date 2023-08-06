@@ -26,9 +26,53 @@ const createParkingSession = async (req, res) => {
     res.status(200).json(newParkingSession)
 }
 
-// process payment on a specific parking session
+// calculate parking costs
+const getParkingSessionCosts = async (req, res) => {
+    const { id } = req.params
+    
+    // check if a datetime in the future has been send in the body for testing purposes, otherwise use the current datetime
+    const now = new Date()
+    let datetime
+    if (req.body.futureDateTime) {
+        const futureDateTime = new Date(req.body.futureDateTime)
+        
+        datetime = futureDateTime > now ? futureDateTime : now
+    } else {
+        datetime = now
+    }
 
-const processPaymentOnParkingSession = async (req, res) => {
+    // get the parking session
+    const parkingSession = await ParkingSession.findOne({ where: { id } })
+
+    // calculate the parking time
+    const parkingTimeInMilliseconds = datetime - parkingSession.createdAt
+
+    // pay per 5 minutes
+    const paymentIntervalInMilliseconds = 300000
+    const timeToPayInMilliseconds = paymentIntervalInMilliseconds * Math.ceil(parkingTimeInMilliseconds / paymentIntervalInMilliseconds)
+    const timeToPayInMinutes = timeToPayInMilliseconds / 1000 / 60
+
+    // TODO get the parkingspots_group details
+    const startingRate = 100
+    const hourlyRate = 400
+
+    const parkingTimeCosts = (hourlyRate / 60) * timeToPayInMinutes
+
+    // TODO get the electric charging costs
+    const electricChargingTime = 6000
+    const electricChargingHourlyRate = 800
+
+
+    res.status(200).json({
+        parkingTimeInMilliseconds,
+        timeToPayInMilliseconds,
+        timeToPayInMinutes,
+        parkingTimeCosts
+    })
+}
+
+// process payment on a specific parking session
+const processParkingSessionPayment = async (req, res) => {
     const { id } = req.params
     const { payment } = req.body
 
@@ -37,10 +81,6 @@ const processPaymentOnParkingSession = async (req, res) => {
 
     // add up all payments
     const updatedPaidAmount = parkingSession.paid_amount + payment
-    
-    console.log("paid amount", parkingSession.paid_amount)
-    console.log("payment", payment)
-    console.log("updatedPaidAmount", updatedPaidAmount)
 
     // update the parking session with all payments
     const updatedParkingSession = await ParkingSession.update({ paid_amount: updatedPaidAmount }, {
@@ -66,6 +106,7 @@ module.exports = {
     getParkingSessions,
     getParkingSession,
     createParkingSession,
-    processPaymentOnParkingSession,
+    getParkingSessionCosts,
+    processParkingSessionPayment,
     endParkingSession
 }
