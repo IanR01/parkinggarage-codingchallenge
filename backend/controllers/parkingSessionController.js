@@ -1,4 +1,6 @@
 const ParkingSession = require('../models/parkingSessionModel')
+const { calcCostsBasedOnTime } = require('../utils/calcCosts')
+const parkingSpotsGroups = require('../config/parkingSpotsGroups')
 
 
 // get all parking-sessions
@@ -28,35 +30,24 @@ const createParkingSession = async (req, res) => {
 
 // calculate parking costs
 const getParkingSessionCosts = async (req, res) => {
-    const { id } = req.params
     
-    // check if a datetime in the future has been send in the body for testing purposes, otherwise use the current datetime
-    const now = new Date()
-    let datetime
-    if (req.body.futureDateTime) {
-        const futureDateTime = new Date(req.body.futureDateTime)
-        
-        datetime = futureDateTime > now ? futureDateTime : now
-    } else {
-        datetime = now
-    }
-
     // get the parking session
+    const { id } = req.params
     const parkingSession = await ParkingSession.findOne({ where: { id } })
 
-    // calculate the parking time
-    const parkingTimeInMilliseconds = datetime - parkingSession.createdAt
+    // get the parkingspots group where the vehicle was checked in
+    const parkingSpotsGroup = parkingSpotsGroups.find((parkingSpotsGroup) => parkingSpotsGroup.id == parkingSession.parkingspots_group_id)
+    
+    // check if there is a future datetime for testing purposes to use as end time
+    const futureDateTime = req.body.futureDateTime ? new Date(req.body.futureDateTime) : null
+    const now = new Date()
+    const endDateTime = futureDateTime > now ? futureDateTime : now
 
-    // pay per 5 minutes
-    const paymentIntervalInMilliseconds = 300000
-    const timeToPayInMilliseconds = paymentIntervalInMilliseconds * Math.ceil(parkingTimeInMilliseconds / paymentIntervalInMilliseconds)
-    const timeToPayInMinutes = timeToPayInMilliseconds / 1000 / 60
+    // calculate the parking time costs
+    const parkingTimeCosts = calcCostsBasedOnTime(parkingSession.createdAt, endDateTime, parkingSpotsGroup.hourlyRate, parkingSpotsGroup.paymentIntervalInMinutes)
+    const totalParkingCosts = parkingTimeCosts + parkingSpotsGroup.startingRate
 
-    // TODO get the parkingspots_group details
-    const startingRate = 100
-    const hourlyRate = 400
-
-    const parkingTimeCosts = (hourlyRate / 60) * timeToPayInMinutes
+    
 
     // TODO get the electric charging costs
     const electricChargingTime = 6000
@@ -64,10 +55,8 @@ const getParkingSessionCosts = async (req, res) => {
 
 
     res.status(200).json({
-        parkingTimeInMilliseconds,
-        timeToPayInMilliseconds,
-        timeToPayInMinutes,
-        parkingTimeCosts
+        parkingTimeCosts,
+        totalParkingCosts
     })
 }
 
