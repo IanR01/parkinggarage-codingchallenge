@@ -1,5 +1,5 @@
 const ParkingSession = require('../models/parkingSessionModel')
-const { calcCostsBasedOnTime } = require('../utils/calcCosts')
+const { calcParkingTimeCosts } = require('../utils/calcCosts')
 const parkingSpotsGroups = require('../config/parkingSpotsGroups')
 
 
@@ -43,9 +43,8 @@ const getParkingSessionCosts = async (req, res) => {
     const now = new Date()
     const endDateTime = futureDateTime > now ? futureDateTime : now
 
-    // calculate the parking time costs
-    const parkingTimeCosts = calcCostsBasedOnTime(parkingSession.createdAt, endDateTime, parkingSpotsGroup.hourlyRate, parkingSpotsGroup.paymentIntervalInMinutes)
-    const totalParkingCosts = parkingTimeCosts + parkingSpotsGroup.startingRate
+
+    const totalParkingCosts = calcParkingTimeCosts(parkingSession, parkingSpotsGroup, endDateTime)
 
     
 
@@ -56,7 +55,8 @@ const getParkingSessionCosts = async (req, res) => {
 
     res.status(200).json({
         parkingTimeCosts,
-        totalParkingCosts
+        totalParkingCosts,
+        totalPC
     })
 }
 
@@ -81,10 +81,22 @@ const processParkingSessionPayment = async (req, res) => {
 
 // end a specific parking session
 const endParkingSession = async (req, res) => {
+    
+    // get the parking session
     const { id } = req.params
-    const { session_ended } = req.body
+    const parkingSession = await ParkingSession.findOne({ where: { id } })
+    
+    // check if there is a future datetime for testing purposes to use as end time
+    const futureDateTime = req.body.futureDateTime ? new Date(req.body.futureDateTime) : null
+    const now = new Date()
+    const endDateTime = futureDateTime > now ? futureDateTime : now
 
-    const updatedParkingSession = await ParkingSession.update({ session_ended }, {
+
+    // TODO check if the payment is sufficient
+
+
+    // end the parking session
+    const updatedParkingSession = await ParkingSession.update({ session_ended: endDateTime }, {
         where: { id }
     })
 

@@ -12,6 +12,19 @@ const calcCostsBasedOnTime = (startTime, endTime, hourlyRate, paymentIntervalInM
     return costs;
 }
 
+const calcParkingTimeCosts = (parkingSession, parkingSpotsGroup, endDateTime) => {
+    // calculate the parking time costs
+    const parkingTimeCosts = calcCostsBasedOnTime(parkingSession.createdAt, endDateTime, parkingSpotsGroup.hourlyRate, parkingSpotsGroup.paymentIntervalInMinutes)
+    const totalParkingCosts = parkingTimeCosts + parkingSpotsGroup.startingRate
+    return totalParkingCosts
+}
+
+const calcElectricChargingCosts = () => {
+    return "placeholder calcElectricChargingCosts"
+}
+
 module.exports = {
-    calcCostsBasedOnTime
+    calcCostsBasedOnTime,
+    calcParkingTimeCosts,
+    calcElectricChargingCosts
 }

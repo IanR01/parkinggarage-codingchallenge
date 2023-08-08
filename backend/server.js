@@ -3,7 +3,8 @@ require('dotenv').config()
 const express = require('express')
 const { Sequelize } = require('sequelize')
 
-const parkingSessionRoutes = require('./routes/parking-session')
+const parkingSessionRoutes = require('./routes/parkingSessionRoutes')
+const electricChargingSessionRoutes = require('./routes/electricChargingSessionRoutes')
 
 // express app
 const app = express()
@@ -19,6 +20,7 @@ app.use((req, res, next) => {
 
 // routes
 app.use('/api/parking-sessions', parkingSessionRoutes)
+app.use('/api/electric-charging-sessions', electricChargingSessionRoutes)
 
 // connect to database
 const sequelize = new Sequelize(
