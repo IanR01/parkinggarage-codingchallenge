@@ -6,7 +6,8 @@ const {
     createParkingSession,
     getParkingSessionCosts,
     processParkingSessionPayment,
-    endParkingSession
+    endParkingSession,
+    getAvailableParkingSpots
 } = require('../controllers/parkingSessionController')
 
 const router = express.Router()
@@ -28,5 +29,8 @@ router.get('/payment/:id', getParkingSessionCosts)
 
 // end a specific parking session
 router.post('/:id', endParkingSession)
+
+// get available parking spots
+router.get('/available/:id', getAvailableParkingSpots)
 
 module.exports = router

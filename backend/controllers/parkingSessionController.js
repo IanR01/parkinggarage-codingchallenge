@@ -117,11 +117,35 @@ const endParkingSession = async (req, res) => {
     }
 }
 
+// get the available parking spots
+const getAvailableParkingSpots = async (req, res) => {
+    const { id } = req.params
+
+    // get the amount of spots in this parking spots group
+    const parkingSpotsGroup = parkingSpotsGroups.find((parkingSpotsGroup) => parkingSpotsGroup.id == id)
+
+    // get the active parking sessions in this parking spots group
+    const activeParkingSessions = await ParkingSession.findAll({ where: {
+        parkingspots_group_id: id,
+        session_ended: null
+    }})
+
+    // calculate the available parking spots in this parking spots group
+    const availableParkingSpots = parkingSpotsGroup.numberOfSpots - activeParkingSessions.length
+
+    res.status(200).json({
+        totalNumberOfSpots: parkingSpotsGroup.numberOfSpots,
+        numberOfSpotsOccupied: activeParkingSessions.length,
+        availableParkingSpots
+    })
+}
+
 module.exports = {
     getParkingSessions,
     getParkingSession,
     createParkingSession,
     getParkingSessionCosts,
     processParkingSessionPayment,
-    endParkingSession
+    endParkingSession,
+    getAvailableParkingSpots
 }
