@@ -1,5 +1,5 @@
 const ParkingSession = require('../models/parkingSessionModel')
-const { calcParkingTimeCosts } = require('../utils/calcCosts')
+const { calcParkingTimeCosts, calcElectricChargingCosts } = require('../utils/calcCosts')
 const parkingSpotsGroups = require('../config/parkingSpotsGroups')
 
 
@@ -43,20 +43,15 @@ const getParkingSessionCosts = async (req, res) => {
     const now = new Date()
     const endDateTime = futureDateTime > now ? futureDateTime : now
 
-
-    const totalParkingCosts = calcParkingTimeCosts(parkingSession, parkingSpotsGroup, endDateTime)
-
-    
-
-    // TODO get the electric charging costs
-    const electricChargingTime = 6000
-    const electricChargingHourlyRate = 800
-
+    // calculate the parking time and electric charging costs
+    const parkingTimeCosts = calcParkingTimeCosts(parkingSession, parkingSpotsGroup, endDateTime)
+    const totalElectricChargingCosts = await calcElectricChargingCosts(parkingSession)
+    const totalToPay = parkingTimeCosts + totalElectricChargingCosts
 
     res.status(200).json({
         parkingTimeCosts,
-        totalParkingCosts,
-        totalPC
+        totalElectricChargingCosts,
+        totalToPay
     })
 }
 
@@ -85,22 +80,41 @@ const endParkingSession = async (req, res) => {
     // get the parking session
     const { id } = req.params
     const parkingSession = await ParkingSession.findOne({ where: { id } })
+
+    // get the parkingspots group where the vehicle was checked in
+    const parkingSpotsGroup = parkingSpotsGroups.find((parkingSpotsGroup) => parkingSpotsGroup.id == parkingSession.parkingspots_group_id)
     
     // check if there is a future datetime for testing purposes to use as end time
     const futureDateTime = req.body.futureDateTime ? new Date(req.body.futureDateTime) : null
     const now = new Date()
     const endDateTime = futureDateTime > now ? futureDateTime : now
 
+    // subtract the period that you're allowed to leave the garage after payment
+    const dateTimeForPaymentCheck = endDateTime - new Date(parkingSpotsGroup.timeAfterPaymentInMinutes * 60 * 1000)
+    console.log("dateTimeForPaymentCheck", dateTimeForPaymentCheck)
 
-    // TODO check if the payment is sufficient
+    // get the costs that at least should have been paid at this moment
+    const parkingTimeCosts = calcParkingTimeCosts(parkingSession, parkingSpotsGroup, dateTimeForPaymentCheck)
+    const totalElectricChargingCosts = await calcElectricChargingCosts(parkingSession)
+    const totalToPay = parkingTimeCosts + totalElectricChargingCosts
 
+    // check if the payment is sufficient
+    const isPaymentSufficient = totalToPay < parkingSession.paid_amount
 
-    // end the parking session
-    const updatedParkingSession = await ParkingSession.update({ session_ended: endDateTime }, {
-        where: { id }
-    })
-
-    res.status(200).json(updatedParkingSession)
+    if (isPaymentSufficient) {
+        // end the parking session
+        const updatedParkingSession = await ParkingSession.update({ session_ended: endDateTime }, {
+            where: { id }
+        })
+    
+        res.status(200).json(updatedParkingSession)
+    } else {
+        res.status(200).json({
+            "error": "Payment is not sufficient",
+            totalToPay,
+            paid_amount: parkingSession.paid_amount
+        })
+    }
 }
 
 module.exports = {
